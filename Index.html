@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>SAL AI | Luxury Video Generation</title>
+  <!-- Supabase JS Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Google Fonts: Elegant Sans -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at 20% 30%, #0a0a0a, #000000);
+      background-attachment: fixed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    /* GLASS CORE */
+    .glass-panel {
+      background: rgba(10, 10, 10, 0.45);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 215, 0, 0.25);
+      border-radius: 2rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,215,0,0.2) inset;
+      transition: all 0.3s ease;
+    }
+
+    /* Gold glow */
+    .gold-glow {
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.4), 0 0 2px #FFD700;
+    }
+
+    button, .upload-area, input, textarea {
+      transition: all 0.2s ease;
+    }
+
+    /* Hide main until auth */
+    .main-interface {
+      display: none;
+    }
+
+    /* Signin container */
+    .auth-container {
+      max-width: 460px;
+      width: 100%;
+      padding: 2rem 2rem 2.5rem;
+      text-align: center;
+    }
+
+    .logo {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .tagline {
+      color: rgba(255,255,240,0.7);
+      letter-spacing: 1px;
+      font-weight: 300;
+      margin-bottom: 2rem;
+    }
+
+    /* Google Button Premium */
+    .google-btn {
+      background: rgba(20,20,20,0.8);
+      border: 1px solid rgba(255,215,0,0.5);
+      border-radius: 3rem;
+      padding: 0.9rem 1.5rem;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #FFD700;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      transition: 0.2s;
+    }
+
+    .google-btn:hover {
+      background: rgba(255,215,0,0.12);
+      border-color: #FFD700;
+      box-shadow: 0 0 12px rgba(255,215,0,0.3);
+      transform: scale(1.01);
+    }
+
+    /* Dashboard layout */
+    .dashboard {
+      max-width: 1200px;
+      width: 100%;
+      padding: 2rem;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(0,0,0,0.5);
+      padding: 0.5rem 1.2rem;
+      border-radius: 3rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid #FFD700;
+    }
+
+    .limit-badge {
+      background: #1e1a0c;
+      border-left: 3px solid #FFD700;
+      padding: 0.3rem 0.9rem;
+      border-radius: 2rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .card {
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(12px);
+      border-radius: 1.8rem;
+      padding: 1.8rem;
+      margin-bottom: 1.8rem;
+      border: 1px solid rgba(255,215,0,0.2);
+    }
+
+    .input-group {
+      margin-bottom: 1.6rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.6rem;
+      color: #FFD700;
+      letter-spacing: 0.5px;
+    }
+
+    textarea, input[type="text"] {
+      width: 100%;
+      background: rgba(20,20,30,0.7);
+      border: 1px solid rgba(255,215,0,0.4);
+      border-radius: 1.2rem;
+      padding: 1rem 1.2rem;
+      color: white;
+      font-size: 1rem;
+      resize: vertical;
+      outline: none;
+    }
+
+    textarea:focus, input:focus {
+      border-color: #FFD700;
+      box-shadow: 0 0 8px rgba(255,215,0,0.3);
+    }
+
+    /* upload zone */
+    .upload-zone {
+      border: 2px dashed rgba(255,215,0,0.5);
+      border-radius: 1.4rem;
+      padding: 1.2rem;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(0,0,0,0.3);
+      transition: 0.2s;
+    }
+    .upload-zone:hover {
+      border-color: #FFD700;
+      background: rgba(255,215,0,0.05);
+    }
+    .preview-img {
+      max-width: 100px;
+      max-height: 100px;
+      border-radius: 12px;
+      margin-top: 12px;
+      border: 1px solid gold;
+    }
+
+    .generate-btn {
+      background: linear-gradient(95deg, #B8860B, #FFD700);
+      border: none;
+      width: 100%;
+      padding: 1rem;
+      border-radius: 3rem;
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: #0a0a0a;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255,215,0,0.6);
+      transition: 0.2s;
+    }
+    .generate-btn:active { transform: scale(0.98); }
+
+    /* modal reward */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      visibility: hidden;
+      opacity: 0;
+      transition: 0.2s;
+    }
+    .modal-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    .modal-content {
+      max-width: 500px;
+      background: rgba(0,0,0,0.9);
+      border: 1px solid #FFD700;
+      border-radius: 2rem;
+      padding: 2rem;
+      text-align: center;
+      backdrop-filter: blur(20px);
+    }
+    .ad-link {
+      background: #1e1a0c;
+      margin: 0.8rem 0;
+      padding: 0.9rem;
+      border-radius: 3rem;
+      color: #FFD700;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.1s;
+      border: 1px solid rgba(255,215,0,0.4);
+    }
+    .ad-link.completed {
+      background: #2c280e;
+      border-color: #FFD700;
+      opacity: 0.7;
+      text-decoration: line-through;
+      cursor: default;
+    }
+    .unlock-btn {
+      background: #FFD700;
+      border: none;
+      margin-top: 1rem;
+      padding: 0.8rem;
+      border-radius: 2rem;
+      font-weight: bold;
+      width: 100%;
+    }
+    .processing-spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255,215,0,0.2);
+      border-top: 4px solid #FFD700;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* ADBLOCKER BLUR OVERLAY */
+    .adblock-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.96);
+      backdrop-filter: blur(12px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      color: white;
+      font-size: 1.5rem;
+      padding: 2rem;
+    }
+    .hidden-block {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIGN IN PANEL (locked) -->
+<div id="authPanel" class="glass-panel auth-container">
+  <div class="logo">SAL AI</div>
+  <div class="tagline">Next‑Gen Video Intelligence</div>
+  <button id="googleSignInBtn" class="google-btn">
+    <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#FFD700" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#FFD700" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FFD700" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#FFD700" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+    Sign in with Google
+  </button>
+  <p style="font-size:0.7rem; margin-top:1.5rem; opacity:0.6;">© 2025 SAL AI — Luxury Neural Engine</p>
+</div>
+
+<!-- MAIN INTERFACE (protected) -->
+<div id="mainApp" class="main-interface dashboard glass-panel" style="display: none;">
+  <div class="header">
+    <h2 style="color:#FFD700;">✨ SAL AI Studio</h2>
+    <div class="user-info">
+      <img id="userAvatar" class="user-avatar" src="" alt="avatar">
+      <span id="userEmail" style="color:white;"></span>
+      <div id="limitDisplay" class="limit-badge">♾️ 6/6 left today</div>
+      <button id="signOutBtn" style="background:transparent; border:1px solid #FFD700; border-radius:2rem; padding:0.4rem 1rem; color:#FFD700; cursor:pointer;">Exit</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="input-group">
+      <label>🎬 Video Prompt</label>
+      <textarea id="videoPrompt" rows="3" placeholder="Describe your cinematic vision..."></textarea>
+    </div>
+    <div class="input-group">
+      <label>🖼️ Image Upload (optional base frame)</label>
+      <div id="uploadArea" class="upload-zone">
+        <span>📸 Click or drag to upload</span>
+        <input type="file" id="imageUpload" accept="image/jpeg,image/png,image/jpg" style="display:none;">
+        <div id="imagePreview"></div>
+      </div>
+    </div>
+    <button id="generateBtn" class="generate-btn">✦ GENERATE VIDEO ✦</button>
+  </div>
+  <div id="infoMessage" style="color:#FFD700; text-align:center; font-size:0.8rem;"></div>
+</div>
+
+<!-- REWARD MODAL (3 Ads unlock) -->
+<div id="rewardModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3 style="color:#FFD700;">🎬 Unlock Generation</h3>
+    <p style="margin:1rem 0;">Watch 3 short ads to process your video.<br>Click each link (Adsterra placeholder) to mark as watched.</p>
+    <div id="adLinksContainer">
+      <div class="ad-link" data-ad="0">📺 Ad 1 - Click to watch</div>
+      <div class="ad-link" data-ad="1">📺 Ad 2 - Click to watch</div>
+      <div class="ad-link" data-ad="2">📺 Ad 3 - Click to watch</div>
+    </div>
+    <button id="confirmUnlockBtn" class="unlock-btn" disabled>🔒 Complete 3 Ads to Generate</button>
+    <button id="closeModalBtn" style="margin-top:1rem; background:transparent; border:none; color:#aaa; cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+<!-- PROCESSING MODAL (custom) -->
+<div id="processingModal" class="modal-overlay">
+  <div class="modal-content" style="text-align:center;">
+    <div class="processing-spinner"></div>
+    <h3 style="margin-top:1rem; color:#FFD700;">AI is weaving your video...</h3>
+    <p style="margin-top:0.5rem;">Contacting Hugging Face inference</p>
+  </div>
+</div>
+
+<script>
+  // ---------- SUPABASE CONFIG (replace with your real Supabase URL & anon key) ----------
+  const SUPABASE_URL = 'https://your-project.supabase.co';      // <-- REPLACE
+  const SUPABASE_ANON_KEY = 'your-anon-key';                   // <-- REPLACE
+  // For demo purposes if keys missing we use localStorage mock mode BUT we provide full auth flow
+  // IMPORTANT: To work on Netlify, update with valid Supabase credentials.
+  // This code fully integrates supabase google oauth.
+
+  let supabase = null;
+  let currentUser = null;
+
+  // Initialize supabase client
+  function initSupabase() {
+    if (SUPABASE_URL.includes('your-project')) {
+      console.warn("⚠️ Using fallback local auth simulation for demo. Replace supabase URL/Key for production.");
+      // Fallback mock for testing UI (still functional locally)
+      return { auth: { onAuthStateChange: () => {}, signInWithOAuth: () => alert("Demo: Replace Supabase keys to enable real Gmail login.\nMock login will activate dashboard.") } };
+    }
+    return supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+
+  let supabaseClient = initSupabase();
+  let isMockMode = SUPABASE_URL.includes('your-project');
+
+  // ----- LIMIT SYSTEM (localStorage per user id) -----
+  const LIMIT_KEY_PREFIX = 'salai_limit_';
+  function getRemainingGenerations(userId) {
+    const key = LIMIT_KEY_PREFIX + userId;
+    const data = localStorage.getItem(key);
+    if (!data) return 6;
+    const { count, date } = JSON.parse(data);
+    const today = new Date().toDateString();
+    if (date !== today) return 6;
+    return count;
+  }
+  function decrementGeneration(userId) {
+    const key = LIMIT_KEY_PREFIX + userId;
+    let remaining = getRemainingGenerations(userId);
+    if (remaining <= 0) return false;
+    const newCount = remaining - 1;
+    localStorage.setItem(key, JSON.stringify({ count: newCount, date: new Date().toDateString() }));
+    return true;
+  }
+  function updateLimitUI() {
+    if (!currentUser) return;
+    const rem = getRemainingGenerations(currentUser.id);
+    document.getElementById('limitDisplay').innerHTML = `🎬 ${rem}/6 generations left today`;
+    if (rem <= 0) document.getElementById('generateBtn').disabled = true;
+    else document.getElementById('generateBtn').disabled = false;
+  }
+
+  // ----- Anti Adblocker Detection -----
+  function detectAdBlocker() {
+    const bait = document.createElement('div');
+    bait.className = 'adsbox';
+    bait.style.display = 'none';
+    document.body.appendChild(bait);
+    const check = setInterval(() => {
+      if (bait.offsetHeight === 0 && getComputedStyle(bait).display === 'none') {
+        // adblock may be present but we need robust: try fetch fake ad network
+        clearInterval(check);
+        fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', { mode: 'no-cors' }).catch(() => {
+          showAdblockOverlay(true);
+        });
+      }
+    }, 100);
+    setTimeout(() => { clearInterval(check); document.body.removeChild(bait); }, 500);
+    // Additional detection: check if any ad script blocked
+    const testAd = new Image();
+    testAd.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
+    testAd.onerror = () => showAdblockOverlay(true);
+  }
+  function showAdblockOverlay(show) {
+    if (show && !document.getElementById('adblockWarning')) {
+      const overlay = document.createElement('div');
+      overlay.id = 'adblockWarning';
+      overlay.className = 'adblock-overlay';
+      overlay.innerHTML = `<div style="background:black; padding:2rem; border-radius:2rem; border:1px solid #FFD700;"><h1 style="color:#FFD700;">⚠️ Ad-Blocker Detected</h1><p style="margin-top:1rem;">Please disable your ad-blocker to support our free AI service.</p><button id="reloadCheckBtn" style="margin-top:1rem; background:#FFD700; border:none; padding:0.7rem 2rem; border-radius:2rem;">Refresh</button></div>`;
+      document.body.appendChild(overlay);
+      document.getElementById('reloadCheckBtn')?.addEventListener('click', () => location.reload());
+    }
+  }
+
+  // ----- Reward System State (3 ads clicked) -----
+  let adClickedStatus = [false, false, false];
+  let pendingGenerationPayload = null; // store prompt, imageBase64
+
+  function resetAdModal() {
+    adClickedStatus = [false, false, false];
+    const links = document.querySelectorAll('#adLinksContainer .ad-link');
+    links.forEach((link, idx) => {
+      link.classList.remove('completed');
+      link.innerText = `📺 Ad ${idx+1} - Click to watch`;
+      link.style.cursor = 'pointer';
+    });
+    const unlockBtn = document.getElementById('confirmUnlockBtn');
+    unlockBtn.disabled = true;
+    unlockBtn.innerText = '🔒 Complete 3 Ads to Generate';
+  }
+
+  function setupAdModal() {
+    const links = document.querySelectorAll('#adLinksContainer .ad-link');
+    links.forEach((link, idx) => {
+      link.addEventListener('click', (e) => {
+        if (adClickedStatus[idx]) return;
+        // Simulate opening Adsterra placeholder (new tab)
+        window.open('https://www.adsterra.com/publishers?ref=salai', '_blank');
+        adClickedStatus[idx] = true;
+        link.classList.add('completed');
+        link.innerText = `✅ Ad ${idx+1} completed`;
+        const allCompleted = adClickedStatus.every(v => v === true);
+        const unlockBtn = document.getElementById('confirmUnlockBtn');
+        if (allCompleted) {
+          unlockBtn.disabled = false;
+          unlockBtn.innerText = '✨ UNLOCK GENERATION ✨';
+        }
+      });
+    });
+    document.getElementById('confirmUnlockBtn').addEventListener('click', async () => {
+      if (!adClickedStatus.every(v=>v)) return;
+      closeModal('rewardModal');
+      // proceed with generation after ads watched
+      await executeVideoGeneration(pendingGenerationPayload.prompt, pendingGenerationPayload.imageBase64);
+      pendingGenerationPayload = null;
+    });
+    document.getElementById('closeModalBtn').addEventListener('click', () => {
+      closeModal('rewardModal');
+      pendingGenerationPayload = null;
+    });
+  }
+
+  function showModal(id) { document.getElementById(id).classList.add('active'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+  // ----- Hugging Face Bridge (Webhook placeholder) -----
+  async function callHuggingFaceWebhook(prompt, imageBase64, userId) {
+    // replace with your actual hugging face webhook URL
+    const WEBHOOK_URL = "https://your-hf-webhook.com/generate"; // CHANGE ME
+    try {
+      const payload = {
+        prompt: prompt,
+        image_base64: imageBase64 || null,
+        user_id: userId,
+        timestamp: Date.now()
+      };
+      // Simulate real fetch (if real URL)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      }).catch(err => { throw new Error("Network error or webhook unreachable (demo simulation).") });
+      clearTimeout(timeoutId);
+      if (!response.ok) throw new Error(`HF API error: ${response.status}`);
+      const result = await response.json();
+      return result;
+    } catch (err) {
+      console.error("HF Bridge error:", err);
+      throw new Error("AI service temporarily unavailable, but generation recorded (demo mode).");
+    }
+  }
+
+  async function executeVideoGeneration(prompt, imageBase64) {
+    if (!currentUser) return;
+    const remaining = getRemainingGenerations(currentUser.id);
+    if (remaining <= 0) {
+      document.getElementById('infoMessage').innerText = "❌ Daily limit (6 videos) reached. Come back tomorrow.";
+      return;
+    }
+    // show processing modal
+    showModal('processingModal');
+    try {
+      // Decrement limit immediately
+      const successDecrement = decrementGeneration(currentUser.id);
+      if (!successDecrement) throw new Error("Limit exceeded");
+      updateLimitUI();
+      // Call HF webhook
+      const result = await callHuggingFaceWebhook(prompt, imageBase64, currentUser.id);
+      closeModal('processingModal');
+      document.getElementById('infoMessage').innerHTML = `✅ Video generation triggered! Result: ${JSON.stringify(result).substring(0,100)}`;
+      // reset prompt & preview if desired
+    } catch (err) {
+      closeModal('processingModal');
+      document.getElementById('infoMessage').innerHTML = `⚠️ Generation error: ${err.message}. Limit may have been used.`;
+    }
+  }
+
+  // ----- Image upload handler (base64 preview) -----
+  let currentImageBase64 = null;
+  function setupImageUpload() {
+    const uploadZone = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('imageUpload');
+    uploadZone.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.style.borderColor = '#FFD700'; });
+    uploadZone.addEventListener('dragleave', () => uploadZone.style.borderColor = 'rgba(255,215,0,0.5)');
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) handleImageFile(file);
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files[0]) handleImageFile(e.target.files[0]);
+    });
+  }
+  function handleImageFile(file) {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      currentImageBase64 = ev.target.result.split(',')[1] || ev.target.result;
+      const previewDiv = document.getElementById('imagePreview');
+      previewDiv.innerHTML = `<img src="${ev.target.result}" class="preview-img" alt="preview">`;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ----- Generate click: show ad reward modal -----
+  function onGenerateClick() {
+    if (!currentUser) return;
+    const prompt = document.getElementById('videoPrompt').value.trim();
+    if (!prompt) {
+      document.getElementById('infoMessage').innerText = "📝 Please enter a video prompt.";
+      return;
+    }
+    const remaining = getRemainingGenerations(currentUser.id);
+    if (remaining <= 0) {
+      document.getElementById('infoMessage').innerHTML = "🚫 Daily limit reached (6 videos). Upgrade tomorrow.";
+      return;
+    }
+    // store payload for after ads
+    pendingGenerationPayload = {
+      prompt: prompt,
+      imageBase64: currentImageBase64 || null
+    };
+    resetAdModal();
+    showModal('rewardModal');
+  }
+
+  // ----- Authentication handling -----
+  async function handleAuth() {
+    if (!isMockMode && supabaseClient && supabaseClient.auth) {
+      const { data, error } = await supabaseClient.auth.signInWithOAuth({ provider: 'google' });
+      if (error) alert(error.message);
+    } else {
+      // Mock mode: pretend user signed in with demo user for showcase
+      currentUser = { id: 'mock-user-123', email: 'demo@salai.com', user_metadata: { avatar_url: '' } };
+      document.getElementById('authPanel').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      document.getElementById('userEmail').innerText = currentUser.email;
+      document.getElementById('userAvatar').src = 'https://ui-avatars.com/api/?background=FFD700&color=000&name=Demo';
+      updateLimitUI();
+    }
+  }
+
+  document.getElementById('googleSignInBtn').addEventListener('click', handleAuth);
+  document.getElementById('signOutBtn')?.addEventListener('click', () => {
+    if (!isMockMode && supabaseClient?.auth) supabaseClient.auth.signOut();
+    currentUser = null;
+    document.getElementById('authPanel').style.display = 'block';
+    document.getElementById('mainApp').style.display = 'none';
+  });
+
+  // init
+  window.onload = () => {
+    setupImageUpload();
+    setupAdModal();
+    document.getElementById('generateBtn').addEventListener('click', onGenerateClick);
+    detectAdBlocker(); // anti-adblock trigger
+    if (!isMockMode && supabaseClient?.auth) {
+      supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          currentUser = session.user;
+          document.getElementById('authPanel').style.display = 'none';
+          document.getElementById('mainApp').style.display = 'block';
+          document.getElementById('userEmail').innerText = currentUser.email;
+          document.getElementById('userAvatar').src = currentUser.user_metadata?.avatar_url || 'https://ui-avatars.com/api/?background=FFD700&color=000&name=User';
+          updateLimitUI();
+        } else if (event === 'SIGNED_OUT') {
+          currentUser = null;
+          document.getElementById('authPanel').style.display = 'block';
+          document.getElementById('mainApp').style.display = 'none';
+        }
+      });
+    } else if (isMockMode) {
+      // For demo we don't auto signin but show button triggers mock signin
+      document.getElementById('googleSignInBtn').onclick = () => {
+        currentUser = { id: 'mock-123', email: 'creator@sal.ai', user_metadata: {} };
+        document.getElementById('authPanel').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        document.getElementById('userEmail').innerText = currentUser.email;
+        document.getElementById('userAvatar').src = 'https://ui-avatars.com/api/?background=FFD700&color=000&name=SA';
+        updateLimitUI();
+      };
+    }
+  };
+</script>
+</body>
+</html>
+
